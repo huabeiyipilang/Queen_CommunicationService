@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="email_account_host">smtp.163.com</string>
+    <string name="email_account_address">kkmlbw@163.com</string>
+    <string name="email_account_username">kkmlbw@163.com</string>
+    <string name="email_account_password">love@2011</string>
+    <bool name="email_account_auth">true</bool>
+</resources>
