@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: C:\\Documents and Settings\\Administrator\\My Documents\\GitHub\\CommunicationService\\src\\cn\\kli\\queen\\communicationservice\\ICommunication.aidl
+ * Original file: W:\\home\\kli\\workspace\\CommunicationService\\src\\cn\\kli\\queen\\communicationservice\\ICommunication.aidl
  */
 package cn.kli.queen.communicationservice;
 public interface ICommunication extends android.os.IInterface
