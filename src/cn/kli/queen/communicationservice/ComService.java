@@ -1,5 +1,8 @@
 package cn.kli.queen.communicationservice;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -11,25 +14,33 @@ public class ComService extends Service {
 	private ComBinder binder;
 	private Klilog klilog = new Klilog(this.getClass());
 	private Sender mSender;
+	final private List<IComCallback> mCallbacks = 
+			new ArrayList<IComCallback>();
 	
 	public class ComBinder extends Stub{
-
-		public ComBinder(){
-			mSender = new EmailSender(ComService.this);
-			mSender.setCallBack(new SenderCallBack(){
-
-				@Override
-				public void onSendCompleted(int res) {
-					
-				}
-				
-			});
-		}
 		
 		@Override
-		public int sendMessage(ComMessage msg) throws RemoteException {
+		public void sendMessage(ComMessage msg) throws RemoteException {
+			klilog.i("[ComBinder] sendMessage");
 			mSender.send(msg);
-			return 0;
+		}
+
+		@Override
+		public void registerForComState(IComCallback callback)
+				throws RemoteException {
+			klilog.i("[ComBinder] registerForComState callback null ? "+(callback == null));
+			if(callback != null){
+				mCallbacks.add(callback);
+			}
+		}
+
+		@Override
+		public void unRegisterForComState(IComCallback callback)
+				throws RemoteException {
+			klilog.i("[ComBinder] unRegisterForComState callback null ? "+(callback == null));
+			if(callback != null){
+				mCallbacks.remove(callback);
+			}
 		}
 		
 	}
@@ -39,6 +50,25 @@ public class ComService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		binder = new ComBinder();
+		mSender = new EmailSender(ComService.this);
+		mSender.setCallBack(new SenderCallBack(){
+
+			@Override
+			public void onSendCompleted(ComMessage cmsg) {
+				if(cmsg == null){
+					return;
+				}
+				klilog.i("onSendCompleted mCallbacks size = "+mCallbacks.size());
+				for(IComCallback callback : mCallbacks){
+					try {
+						callback.onSendComplete(cmsg);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+		});
 	}
 
 

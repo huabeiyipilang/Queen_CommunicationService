@@ -15,17 +15,16 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import android.content.Context;
-import android.util.Log;
 
 public class EmailSender extends Sender {
-	private final static String MAIL_SUBJECT = "BUG";
-	
+
 	Session mSession;
 	MimeMessage mMsg;
 	EmailAccount mAccount;
-	ComMessage currentComMessage;
-	
-	public EmailSender(Context context){
+	ComMessage mComMessage;
+
+	public EmailSender(Context context) {
+		super(context);
 		mAccount = new EmailAccount(context);
 		buildSession(); 
 	}
@@ -39,7 +38,7 @@ public class EmailSender extends Sender {
 	}
 	
 	private boolean buildMail(ComMessage msg){
-		currentComMessage = msg;
+		mComMessage = msg;
 		Address addFrom;
 		Address addTo;
 		try {
@@ -64,41 +63,6 @@ public class EmailSender extends Sender {
 		}
 		return true;
 	}
-	
-	private boolean sendMail(){
-		try {
-			Transport transport = mSession.getTransport("smtp");
-			transport.connect();
-			Transport.send(mMsg);
-			transport.close();
-		} catch (NoSuchProviderException e) {
-			sendCallBack(ERROR_HOST);
-			e.printStackTrace();
-			return false;
-		} catch (MessagingException e) {
-			sendCallBack(ERROR_UNKNOWN);
-			e.printStackTrace();
-			return false;
-		}
-		sendCallBack(SUCCESS);
-		return true;
-	}
-	
-	@Override
-	public void send(ComMessage msg) {
-		if(!buildMail(msg)){
-			sendCallBack(ERROR_HOST);
-		}
-		new Thread(){
-
-			@Override
-			public void run() {
-				super.run();
-				sendMail();
-			}
-			
-		}.start();
-	}
 
 	class PopupAuthenticator extends Authenticator{
 
@@ -110,15 +74,26 @@ public class EmailSender extends Sender {
 	}
 
 	@Override
-	protected void sendCallBack(int res) {
-		super.sendCallBack(res);
-		currentComMessage.callBack.arg1 = res;
-		try {
-			currentComMessage.callBack.sendToTarget();
-		} catch (Exception e) {
-			e.printStackTrace();
+	ComMessage onMsgSend(ComMessage cmsg) {
+		int res = ComMessage.SUCCESS;
+		if (!buildMail(cmsg)) {
+			res = ComMessage.ERROR_HOST;
+		} else {
+			try {
+				Transport transport = mSession.getTransport("smtp");
+				transport.connect();
+				Transport.send(mMsg);
+				transport.close();
+			} catch (NoSuchProviderException e) {
+				res = ComMessage.ERROR_HOST;
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				res = ComMessage.ERROR_UNKNOWN;
+				e.printStackTrace();
+			}
 		}
+		cmsg.cause = res;
+		return cmsg;
+		
 	}
-	
-	
 }
